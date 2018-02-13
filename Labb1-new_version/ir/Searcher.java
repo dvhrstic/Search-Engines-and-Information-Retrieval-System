@@ -33,20 +33,32 @@ public class Searcher {
         //System.out.println();
         int wcount = 0;
         PostingsList answer = new PostingsList();
+        System.out.print("Search word(s)");
         for (Query.QueryTerm searchQuery : query.queryterm){
-            System.out.print("Search word(s): " + "'" + searchQuery.term + "'");
+            System.out.print("'" + searchQuery.term + "'");
             wcount++;
         }
         System.out.println();
         if (wcount < 2){
+            if (index.getPostings(query.queryterm.get(0).term) != null){
             return index.getPostings(query.queryterm.get(0).term);
+        }
+        else
+            {
+                System.out.println("There is no such a token");
+                return null;
+            }
         }else{
             ArrayList<PostingsList> postings = new ArrayList<PostingsList>();
             int i;
             for (i = 0; i < wcount; i++){
+                if(index.getPostings(query.queryterm.get(i).term) == null){
+                    System.out.println("There is no such a token!");
+                    return null;
+                }
                 postings.add(index.getPostings(query.queryterm.get(i).term));
             }
-            if (queryType == QueryType.INTERSECTION_QUERY){}
+            if (queryType == QueryType.INTERSECTION_QUERY){
             Collections.sort(postings, new Comparator<PostingsList>() {
                 @Override
             public int compare(PostingsList p1, PostingsList p2) {
@@ -87,15 +99,7 @@ public class Searcher {
                 while(p1_offsetindex < p1.size()){
                     while(p2_offsetindex < p2.size()){
                         if (p1.getOffset(p1_offsetindex) + 1 == p2.getOffset(p2_offsetindex)){
-                            System.out.println("Doc " + p1.docID);
-                            //int i;
-                            System.out.print("Posting 1");
-                            for (i = 0; i < p1.size(); i++){System.out.print(" " + p1.getOffset(i));}
-                            System.out.println();
-                            System.out.print("Posting 2");
-                            for (i = 0; i < p2.size(); i++){System.out.print(" "  + p2.getOffset(i));}
                             answer.addID(p1.docID, p2.getOffset(p2_offsetindex));
-                            //p2_offsetindex++;
                         }
                         else if (p2.getOffset(p2_offsetindex) > p1.getOffset(p1_offsetindex)) {
                             break;

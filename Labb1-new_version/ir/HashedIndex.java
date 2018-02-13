@@ -41,7 +41,6 @@ public class HashedIndex implements Index {
      */
     public PostingsList getPostings( String token ) {
     if (!index.containsKey(token)){
-        System.out.println("There is no such a token! ");
         return null;
     }else{
         return index.get(token);
