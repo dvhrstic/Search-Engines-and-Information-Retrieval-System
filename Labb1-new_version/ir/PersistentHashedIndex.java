@@ -62,15 +62,13 @@ public class PersistentHashedIndex implements Index {
     public static final long DICTIONARYSIZE = 680 * 611953L;
 
 
-
-
     /**
      *   A helper class representing one entry in the dictionary hashtable.
      */
     public class Entry {
-	//
-	//  YOUR CODE HERE
-	//
+        String token;
+        int size;
+        int memory_address;
     }
 
 
@@ -146,9 +144,8 @@ public class PersistentHashedIndex implements Index {
      *  @param ptr   The place in the dictionary file to store the entry
      */
     void writeEntry( Entry entry, long ptr ) {
-	//
-	//  YOUR CODE HERE
-	//
+        //dictionaryFile.write(entry.token,ptr,ENTRYSIZE);
+        //return null;
     }
 
     /**
@@ -206,18 +203,58 @@ public class PersistentHashedIndex implements Index {
     /**
      *  Write the index to files.
      */
+
+    public int hashFunc(String token) {
+        // In order to only have positive values
+        int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
+        int value = -1;
+        hash = (int) (long) TABLESIZE;
+        try{
+        dictionaryFile.seek(hash * ENTRYSIZE);
+        value = dictionaryFile.readByte();
+        while(value != 0){
+
+            hash += ENTRYSIZE;
+            dictionaryFile.seek(hash * ENTRYSIZE);
+            value = dictionaryFile.readByte();
+
+            }
+        }
+        // End of file, start from the begining
+        catch (IOException e){
+        hash = 0;
+        while (value != 0){
+            hash += ENTRYSIZE;
+            try {
+            dictionaryFile.seek(hash * ENTRYSIZE);
+            value = dictionaryFile.readByte();
+            }
+            catch (IOException ioe) {System.err.println(" --NO MORE SPACE FOR ENTRIES--");}
+            }
+        }
+        return hash;
+    }
+
     public void writeIndex() {
         int collisions = 0;
+        int token_loc;
         try {
             // Write the 'docNames' and 'docLengths' hash maps to a file
             writeDocInfo();
-
             // Write the dictionary and the postings list
+            for (Map.Entry<String, PostingsList> pair : index.entrySet()){
+                String token = pair.getKey();
+                PostingsList pos_list = pair.getValue();
+                //System.out.println(token);
+                dictionaryFile.setLength(DICTIONARYSIZE);
+                token_loc = hashFunc(token);
+                System.out.println("END" + token_loc);
 
-	    //
-	    //  YOUR CODE HERE
-	    //
-        }
+            }
+            }
+
+
+
         catch ( IOException e ) {
             e.printStackTrace();
         }
@@ -244,9 +281,13 @@ public class PersistentHashedIndex implements Index {
      *  Inserts this token in the main-memory hashtable.
      */
     public void insert( String token, int docID, int offset ) {
-	//
-	//  YOUR CODE HERE
-	//
+    if (index.containsKey(token)){
+        index.get(token).addID(docID, offset);
+    }else{
+        PostingsList postingsList = new PostingsList();
+        postingsList.addID(docID, offset);
+        index.put(token, postingsList);
+        }
     }
 
 
