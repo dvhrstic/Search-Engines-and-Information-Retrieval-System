@@ -83,8 +83,8 @@ public class PersistentHashedIndex implements Index {
             this.dic_entry = dic_entry;
             // Maybe should be casted to toString()
             this.token =  dic_entry.split(" ", 3)[0];
-            this.size =  Integer.parseInt(dic_entry.split(" ", 3)[1]);
-            this.mem_addres =  Long.parseLong(dic_entry.split(" ", 3)[2]);
+            this.size =  Integer.parseInt(dic_entry.split(" ", 3)[1].replaceAll("\\W", ""));
+            this.mem_addres =  Long.parseLong(dic_entry.split(" ", 3)[2].replaceAll("\\W", ""));
         }
         public String getEntry(){
             return this.dic_entry;
@@ -174,19 +174,19 @@ public class PersistentHashedIndex implements Index {
      */
     void writeEntry( Entry entry, long ptr ) {
     word_count+=1;
-    if (word_count % 1000 == 0){
+    if (word_count % 10000 == 0){
         System.out.println(" Word count " + word_count);
     }
     try{
         dictionaryFile.seek(ptr);
-        dictionaryFile.writeBytes(entry.getEntry());
+        dictionaryFile.writeUTF(entry.getEntry());
         //System.out.println(" Writing : " +  entry.getEntry() + " to adress: " + ptr);
 
         if (ENTRYSIZE-entry.getEntry().getBytes().length < 0){
             System.err.println(" ENTRYSIZE too small!!!");
             System.exit(0);
         }
-        dictionaryFile.skipBytes(ENTRYSIZE-entry.getPostingSize());
+        //dictionaryFile.skipBytes(ENTRYSIZE-entry.getPostingSize());
     }catch ( IOException e ) {
             e.printStackTrace();
         }
@@ -196,17 +196,33 @@ public class PersistentHashedIndex implements Index {
      *
      *  @param ptr The place in the dictionary file where to start reading.
      */
-    Entry readEntry( long ptr ) {
-        byte[] b = new byte[ENTRYSIZE];
+    Entry readEntry( long ptr, String word ) {
         String s;
         Entry entry = null;
+        long i = 0;
         try{
+            if (ptr >= DICTIONARYSIZE - ENTRYSIZE){
+                ptr = 0;
+            }
             dictionaryFile.seek(ptr);
-            dictionaryFile.readFully(b);
-            s = new String(b);
-            System.out.println(" Reading " + s +  " from " + ptr);
+            s = dictionaryFile.readUTF();
+            while((s.trim().length() == 0 || s.split(" ", 3)[0].equals( word ) == false) && i < TABLESIZE){
+                if (ptr >= (DICTIONARYSIZE - ENTRYSIZE)){
+                    ptr = 0;
+                }else {
+                    ptr += ENTRYSIZE;
+                }
+                dictionaryFile.seek(ptr);
+                s = dictionaryFile.readUTF();
+                i += 1;
+            }
+            if (i == TABLESIZE){
+                System.err.println(word + " not found in the database");
+                System.exit(0);
+            }
             entry = new Entry(s);
         }catch ( IOException e ) {
+            System.err.println(ptr);
             e.printStackTrace();
         }
         return entry;
@@ -253,67 +269,25 @@ public class PersistentHashedIndex implements Index {
 
 
     /**
-     *  Write the index to files.
-     */
-
-    // public int hashFunc(String token) {
-    //     // In order to only have positive values
-    //     int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
-    //     int value = -1;
-    //     byte[] b = new byte[ENTRYSIZE];
-    //     //hash = (int) (long) TABLESIZE;
-    //     try{
-    //     dictionaryFile.seek(hash * ENTRYSIZE);
-    //     value = dictionaryFile.read(b,0,ENTRYSIZE);
-    //     int sum = 0;
-    //     for(byte s : b){
-    //         sum += s;
-    //     }
-    //     System.out.println( "sum "+ sum);
-    //     System.out.println(" Value" + value);
-    //     while(value != 0){
-    //         hash += ENTRYSIZE;
-    //         dictionaryFile.seek(hash * ENTRYSIZE);
-    //         value = dictionaryFile.read(b,0,ENTRYSIZE);
-    //         }
-    //     }
-    //     // End of file, start from the begining
-    //     catch (IOException e){
-    //     System.out.println("In a catch where hash is " + hash + value);
-    //     hash = 0;
-    //     while (value != 0){
-    //         hash += ENTRYSIZE;
-    //         try {
-    //         dictionaryFile.seek(hash * ENTRYSIZE);
-    //         value = dictionaryFile.read(b,0,ENTRYSIZE);
-    //         System.out.println(" In the end value : " + value);
-    //         }
-    //         catch (IOException ioe) {System.err.println(" --NO MORE SPACE FOR ENTRIES--");}
-    //         }
-    //     }
-    //     return hash;
-    // }
-
-//    public static int hashFunc(String str) {
-//        int hash = 5381;
-//
-//        //long range = (long) Math.ceil((long)TABLESIZE);
-//        for (int i = 0; i < str.length(); i++)
-//            hash = (str.charAt(i) + ((hash << 5) - hash)) % (int)(long) TABLESIZE;
-//        return hash;
-//    }
-
-    public int hashFunc(String token){
-        int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
-        if (hash == (int)(long) TABLESIZE){
-            hash = 31;
-        }
+    *  Write the index to files.
+    */
+    public static long hashFunc(String str) {
+        long hash = 5381;
+        for (int i = 0; i < str.length(); i++)
+            hash = (str.charAt(i) + ((hash << 5) - hash)) % (TABLESIZE - 1);
         return hash * ENTRYSIZE;
     }
+    // public int hashFunc(String token){
+    //     int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
+    //     if (hash == (int)(long) TABLESIZE){
+    //         hash = 31;
+    //     }
+    //     return hash * ENTRYSIZE;
+    // }
 
     public void writeIndex() {
         int collisions = 0;
-        int token_loc = 0;
+        long token_loc = 0;
         long curr_mem_adr = 0;
         int posting_size;
         Entry entry;
@@ -333,44 +307,32 @@ public class PersistentHashedIndex implements Index {
                 postings_string = new StringBuilder();
                 token_loc = hashFunc(token);
                 dictionaryFile.seek(token_loc);
-                dictionaryFile.readFully(b);
-                entryString = new String(b);
-                //if (word_count == 50){System.exit(0);}
-                //System.out.println(" String with length " + entryString.length() + " is " + entryString);
-                //System.out.println(" All white spaces " + (entryString.trim().length() == 0));
-                while (token_loc >= (int)(long)DICTIONARYSIZE - ENTRYSIZE || entryString.trim().length() != 0) {
-                    if (token_loc >= (int)(long)DICTIONARYSIZE - ENTRYSIZE){
+                entryString = dictionaryFile.readUTF();
+                while (token_loc >= DICTIONARYSIZE - ENTRYSIZE || entryString.trim().length() != 0) {
+                    if (token_loc >= DICTIONARYSIZE - ENTRYSIZE){
                         token_loc = 0;
                     }else{
                         token_loc += ENTRYSIZE;
                     }
                     dictionaryFile.seek(token_loc);
-                    //System.out.println(" Value inside while " + value + " with hash " + token_loc);
-                    dictionaryFile.readFully(b);
-                    entryString = new String(b);
+                    entryString = dictionaryFile.readUTF();
                     collisions+=1;
-                    //System.out.println(entryString.trim().length());
                 }
                 for (int i = 0; i < pos_list.size(); i ++){
-                    //System.out.print(pos_list.get(i).docID + " ---> ");
                     postings_string.append(pos_list.get(i).docID);
                     for (int j = 0; j < pos_list.get(i).size(); j++){
-                        //System.out.print(" " + pos_list.get(i).getOffset(j));
                         postings_string.append(" " + pos_list.get(i).getOffset(j));
                     }
                     postings_string.append("\n");
                 }
-                //System.out.println(postings_string.toString());
                 posting_size = writeData(postings_string.toString(), curr_mem_adr);
                 entry = new Entry(token, posting_size, curr_mem_adr);
-                //System.out.println(" ENTRY " + entry.getEntry());
                 int curr_entrysize = entry.getEntry().getBytes().length;
                 if(curr_entrysize > MAX_ENTRYSIZE){
                     MAX_ENTRYSIZE = curr_entrysize;
                 }
                 writeEntry(entry, token_loc);
                 curr_mem_adr += posting_size;
-                //System.out.println(" curr_mem_adr " + curr_mem_adr + " token_loc " + token_loc);
             }
         }catch ( IOException e) {
             System.err.println(" Token loc " + token_loc + " DICTIONARYSIZE " + DICTIONARYSIZE + (token_loc == (int)(long) DICTIONARYSIZE));
@@ -393,33 +355,29 @@ public class PersistentHashedIndex implements Index {
     public PostingsList getPostings( String token ) {
         Entry entry;
         long mem_adress;
-        int hash = hashFunc( token );
+        long hash = hashFunc( token );
         String posting_string;
         Scanner scanner;
         Scanner scanner2;
         String line;
         String line2;
-        entry = readEntry( hash * ENTRYSIZE );
         int i;
         int doc_id;
         PostingsList postingsList = new PostingsList();
-        while(entry.token != token){
-            hash += ENTRYSIZE;
-            entry = readEntry( hash * ENTRYSIZE );
-        }
+        entry = readEntry ( hash, token );
         posting_string = readData(entry.getMemAdress(), entry.getPostingSize());
         scanner = new Scanner(posting_string);
         while (scanner.hasNextLine()) {
-            line = scanner.next();
+            line = scanner.nextLine();
             i = 0;
             doc_id = 0;
             scanner2 = new Scanner(line);
             while(scanner2.hasNext()){
                 if (i == 0){
-                    doc_id = Integer.parseInt(scanner2.nextLine());
-                }else{
-                    postingsList.addID( doc_id, Integer.parseInt(scanner2.nextLine()));
+                    doc_id = scanner2.nextInt();
                 }
+                postingsList.addID( doc_id, scanner2.nextInt());
+                i++;
             }
         }
         scanner.close();
