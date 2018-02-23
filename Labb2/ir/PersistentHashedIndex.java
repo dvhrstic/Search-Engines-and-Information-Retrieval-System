@@ -217,8 +217,8 @@ public class PersistentHashedIndex implements Index {
                 i += 1;
             }
             if (i == TABLESIZE){
-                System.err.println(word + " not found in the database");
-                System.exit(0);
+                System.out.println(word + " not found in the database");
+                return null;
             }
             entry = new Entry(s);
         }catch ( IOException e ) {
@@ -365,6 +365,7 @@ public class PersistentHashedIndex implements Index {
         int doc_id;
         PostingsList postingsList = new PostingsList();
         entry = readEntry ( hash, token );
+        if (entry == null){return null;}
         posting_string = readData(entry.getMemAdress(), entry.getPostingSize());
         scanner = new Scanner(posting_string);
         while (scanner.hasNextLine()) {

@@ -173,21 +173,21 @@ public class PersistentHashedIndex implements Index {
      *  @param ptr   The place in the dictionary file to store the entry
      */
     void writeEntry( Entry entry, long ptr ) {
-    word_count+=1;
-    if (word_count % 10000 == 0){
-        System.out.println(" Word count " + word_count);
-    }
-    try{
-        dictionaryFile.seek(ptr);
-        dictionaryFile.writeUTF(entry.getEntry());
-        //System.out.println(" Writing : " +  entry.getEntry() + " to adress: " + ptr);
-
-        if (ENTRYSIZE-entry.getEntry().getBytes().length < 0){
-            System.err.println(" ENTRYSIZE too small!!!");
-            System.exit(0);
+        word_count+=1;
+        if (word_count % 10000 == 0){
+            System.out.println(" Word count " + word_count);
         }
-        //dictionaryFile.skipBytes(ENTRYSIZE-entry.getPostingSize());
-    }catch ( IOException e ) {
+        try{
+            dictionaryFile.seek(ptr);
+            dictionaryFile.writeUTF(entry.getEntry());
+            //System.out.println(" Writing : " +  entry.getEntry() + " to adress: " + ptr);
+
+            if (ENTRYSIZE-entry.getEntry().getBytes().length < 0){
+                System.err.println(" ENTRYSIZE too small!!!");
+                System.exit(0);
+            }
+            //dictionaryFile.skipBytes(ENTRYSIZE-entry.getPostingSize());
+        }catch ( IOException e ) {
             e.printStackTrace();
         }
     }
@@ -217,8 +217,8 @@ public class PersistentHashedIndex implements Index {
                 i += 1;
             }
             if (i == TABLESIZE){
-                System.err.println(word + " not found in the database");
-                System.exit(0);
+                System.out.println(word + " not found in the database");
+                return null;
             }
             entry = new Entry(s);
         }catch ( IOException e ) {
@@ -259,9 +259,9 @@ public class PersistentHashedIndex implements Index {
         try (BufferedReader br = new BufferedReader(freader)) {
             String line;
             while ((line = br.readLine()) != null) {
-               String[] data = line.split(";");
-               docNames.put(new Integer(data[0]), data[1]);
-               docLengths.put(new Integer(data[0]), new Integer(data[2]));
+                String[] data = line.split(";");
+                docNames.put(new Integer(data[0]), data[1]);
+                docLengths.put(new Integer(data[0]), new Integer(data[2]));
             }
         }
         freader.close();
@@ -269,8 +269,8 @@ public class PersistentHashedIndex implements Index {
 
 
     /**
-    *  Write the index to files.
-    */
+     *  Write the index to files.
+     */
     public static long hashFunc(String str) {
         long hash = 5381;
         for (int i = 0; i < str.length(); i++)
@@ -365,6 +365,7 @@ public class PersistentHashedIndex implements Index {
         int doc_id;
         PostingsList postingsList = new PostingsList();
         entry = readEntry ( hash, token );
+        if (entry == null){return null;}
         posting_string = readData(entry.getMemAdress(), entry.getPostingSize());
         scanner = new Scanner(posting_string);
         while (scanner.hasNextLine()) {
@@ -389,12 +390,12 @@ public class PersistentHashedIndex implements Index {
      *  Inserts this token in the main-memory hashtable.
      */
     public void insert( String token, int docID, int offset ) {
-    if (index.containsKey(token)){
-        index.get(token).addID(docID, offset);
-    }else{
-        PostingsList postingsList = new PostingsList();
-        postingsList.addID(docID, offset);
-        index.put(token, postingsList);
+        if (index.containsKey(token)){
+            index.get(token).addID(docID, offset);
+        }else{
+            PostingsList postingsList = new PostingsList();
+            postingsList.addID(docID, offset);
+            index.put(token, postingsList);
         }
     }
 
@@ -411,6 +412,6 @@ public class PersistentHashedIndex implements Index {
         System.out.println(" Max entry size " + MAX_ENTRYSIZE);
         System.out.println(" Time(sec): " + exec_time/1000);
         System.err.println( "done!" );
-     }
+    }
 
 }
