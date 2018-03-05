@@ -17,8 +17,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 
     public int docID;
     public double score = 0;
-    //public int offset;
-
     private ArrayList<Integer> offsets = new ArrayList<Integer>();
 
 
@@ -32,11 +30,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     public int compareTo( PostingsEntry other ) {
 	return Double.compare( other.score, score );
     }
-
-    // public ArrayList<Integer> getOffset(){
-    //     return offsets;
-    //     //return offset;
-    // }
 
     public int getOffset(int i ){
         return offsets.get(i);

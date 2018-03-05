@@ -271,19 +271,13 @@ public class PersistentHashedIndex implements Index {
     /**
      *  Write the index to files.
      */
-    public static long hashFunc(String str) {
-        long hash = 5381;
-        for (int i = 0; i < str.length(); i++)
-            hash = (str.charAt(i) + ((hash << 5) - hash)) % (TABLESIZE - 1);
+    public int hashFunc(String token){
+        int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
+        if (hash == (int)(long) TABLESIZE){
+            hash = 31;
+        }
         return hash * ENTRYSIZE;
     }
-    // public int hashFunc(String token){
-    //     int hash = (token.hashCode() & 0x7fffffff) % (int) (long) TABLESIZE;
-    //     if (hash == (int)(long) TABLESIZE){
-    //         hash = 31;
-    //     }
-    //     return hash * ENTRYSIZE;
-    // }
 
     public void writeIndex() {
         int collisions = 0;
@@ -415,3 +409,11 @@ public class PersistentHashedIndex implements Index {
     }
 
 }
+
+
+// public static long hashFunc(String str) {
+//     long hash = TABLESIZE / 2;
+//     for (int i = 0; i < str.length(); i++)
+//         hash = (str.charAt(i) + ((hash << 5) - hash)) % (TABLESIZE - 1);
+//     return hash * ENTRYSIZE;
+// }
