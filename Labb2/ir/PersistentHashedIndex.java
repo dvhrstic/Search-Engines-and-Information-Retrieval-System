@@ -5,8 +5,6 @@
  *   Johan Boye, KTH, 2018
  */
 
-package ir;
-
 import java.io.*;
 import java.util.*;
 import java.nio.charset.*;
@@ -54,7 +52,7 @@ public class PersistentHashedIndex implements Index {
     long free = 0L;
 
     /** The cache as a main-memory hash map. */
-    HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
+    HashMap<String, PostingsList> index = new HashMap<String, PostingsList>();
 
     public int MAX_ENTRYSIZE = 0;
     public int word_count = 0;
@@ -238,9 +236,9 @@ public class PersistentHashedIndex implements Index {
      */
     private void writeDocInfo() throws IOException {
         FileOutputStream fout = new FileOutputStream( INDEXDIR + "/docInfo" );
-        for (Map.Entry<Integer,String> entry : docNames.entrySet()) {
+        for (Map.Entry<Integer,String> entry : Index.docNames.entrySet()) {
             Integer key = entry.getKey();
-            String docInfoEntry = key + ";" + entry.getValue() + ";" + docLengths.get(key) + "\n";
+            String docInfoEntry = key + ";" + entry.getValue() + ";" + Index.docLengths.get(key) + "\n";
             fout.write(docInfoEntry.getBytes());
         }
         fout.close();
@@ -260,8 +258,8 @@ public class PersistentHashedIndex implements Index {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(";");
-                docNames.put(new Integer(data[0]), data[1]);
-                docLengths.put(new Integer(data[0]), new Integer(data[2]));
+                Index.docNames.put(new Integer(data[0]), data[1]);
+                Index.docLengths.put(new Integer(data[0]), new Integer(data[2]));
             }
         }
         freader.close();
@@ -352,7 +350,7 @@ public class PersistentHashedIndex implements Index {
      *  Returns the postings for a specific term, or null
      *  if the term is not in the index.
      */
-    public PostingsList getPostings( String token ) {
+    public PostingsList getPostings(String token ) {
         Entry entry;
         long mem_adress;
         long hash = hashFunc( token );

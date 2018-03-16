@@ -5,8 +5,6 @@
  *   Johan Boye, 2017
  */
 
-package ir;
-
 import java.io.*;
 import java.util.*;
 import java.nio.charset.*;

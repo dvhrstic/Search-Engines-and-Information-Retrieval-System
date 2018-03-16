@@ -4,7 +4,6 @@
  *
  *   Johan Boye, Dmytro Kalpachki 2017
  */
-package ir;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -329,7 +328,7 @@ public class SearchGUI extends JFrame {
         }
         revalidate();
         repaint();
-    };
+    }
 
 
     /**

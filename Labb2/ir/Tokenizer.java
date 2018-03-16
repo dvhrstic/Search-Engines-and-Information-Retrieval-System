@@ -3,9 +3,7 @@
  *  Information Retrieval course at KTH.
  * 
  *  Johan Boye, 2016
- */  
-
-package ir;
+ */
 
 import java.io.Reader;
 import java.io.IOException;
@@ -115,9 +113,7 @@ public class Tokenizer {
 	    return true;
 	if ( c >= 91 && c <= 96 )
 	    return true;
-	if ( c >= 123 && c <= 126 ) 
-	    return true;
-	return false;
+        return c >= 123 && c <= 126;
     }
 
 
@@ -160,7 +156,7 @@ public class Tokenizer {
 		// Remove diacritics by mapping to the closest character 
 		// without diacritics.
 		if ( c >= '\u00c0' && c <= '\u017e' ) {
-		    buf[ptr] = SPECIAL_CHAR_MAPPING[(int)(c-'\u00c0')];
+		    buf[ptr] = SPECIAL_CHAR_MAPPING[c-'\u00c0'];
 		}
 	    }
 	    if ( case_folding ) {
@@ -168,11 +164,8 @@ public class Tokenizer {
 	    }
 	    return true;
 	}
-	if ( c >= '!' && c <= '~' ) {
-	    return true;
-	}
+        return c >= '!' && c <= '~';
 	// This is not a character that can occur in a token.
-	return false;
     }
 
 

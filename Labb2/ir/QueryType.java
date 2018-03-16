@@ -3,9 +3,7 @@
  *   Information Retrieval course at KTH.
  * 
  *   Johan Boye, 2017
- */  
-
-package ir;
+ */
 
 /**
  *  The different types of search queries we are considering in

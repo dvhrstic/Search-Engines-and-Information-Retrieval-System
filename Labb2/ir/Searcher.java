@@ -5,11 +5,11 @@
  *   Johan Boye, 2017
  */
 
-package ir;
 import java.util.Collections;
 import java.util.Comparator;
-//import java.util.*;
+import java.lang.*;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.ArrayList;
 
 /**
@@ -41,14 +41,16 @@ public class Searcher {
         System.out.println();
         if (wcount < 2){
             if (index.getPostings(query.queryterm.get(0).term) != null){
-                return index.getPostings(query.queryterm.get(0).term);
-            }
+                if (queryType == QueryType.RANKED_QUERY){ return singleRanked(index.getPostings(query.queryterm.get(0).term));}
+                else{return index.getPostings(query.queryterm.get(0).term);}
+                }
             else
             {
                 System.out.println("There is no such a token");
                 return null;
             }
         }else{
+            if (queryType == QueryType.RANKED_QUERY){return  multiRanked(query);}
             ArrayList<PostingsList> postings = new ArrayList<PostingsList>();
             int i;
             for (i = 0; i < wcount; i++){
@@ -72,14 +74,72 @@ public class Searcher {
                 System.out.println();
                 if (queryType == QueryType.INTERSECTION_QUERY) answer = intersection(answer, postings.get(0));
                 else if (queryType == QueryType.PHRASE_QUERY) answer = phraseIntersection(answer, postings.get(0));
+                // TODO else if (QUERY_RANK)
                 postings.remove(0);
             }
         }
         return answer;
     }
 
+    /**
+     * @param query containing all the search words
+     * @return sorted PostingsList
+     */
+    private PostingsList multiRanked(Query query){
+        PostingsList rankedPos = new PostingsList();
+        double wTq;
+        double wFtd;
+        for (Query.QueryTerm searchQuery : query.queryterm){
+            String queryWord = searchQuery.term;
+            PostingsList postingsCurr = index.getPostings(queryWord);
+            wTq = Math.log(index.docNames.size() / postingsCurr.getDf());
 
-    public PostingsList phraseIntersection(PostingsList postings1, PostingsList postings2){
+            System.out.println(" Word: " + queryWord);
+
+            for (int j = 0; j < postingsCurr.size(); j++){
+                PostingsEntry postingsEntry = postingsCurr.get(j);
+                if (!rankedPos.containsDoc(postingsEntry.docID)){
+                    for (int i = 0; i < postingsEntry.size();i++) {
+                        rankedPos.addID(postingsEntry.docID, postingsEntry.getOffset(i));
+                    }
+                }
+                    //System.out.println(" Doc id :" + postingsEntry.docID);
+                    wFtd = postingsEntry.getTf() * wTq;
+                    //System.out.println(" position " + postingsCurr.indexOf(postingsEntry));
+                    rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wTq * wFtd;
+                    //System.out.println(rankedPos.get(postingsCurr.indexOf(postingsEntry)).score);
+            }
+        }
+        for (int k = 0; k < rankedPos.size(); k++){
+            rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+        }
+        rankedPos.sort();
+        return rankedPos;
+    }
+
+
+    private PostingsList singleRanked(PostingsList postingsList){
+        int N = index.docNames.size();
+        int df = postingsList.size();
+        int i, tf, doc_len, doc_id;
+        int totalTf = 0;
+        PostingsEntry p = postingsList.get(0);
+        for (i = 0; i < postingsList.size(); i++) {
+            p = postingsList.get(i);
+            tf = p.getTf();
+            totalTf += tf;
+            doc_id = p.docID;
+            doc_len = index.docLengths.get(doc_id);
+            //System.out.println("Results" + ", " + tf  + ", " + index.docNames.get(doc_id) + ", " + doc_len + " score : " + (1 + Math.log(tf)) * Math.log(N / df));
+            //postingsList.get(i).score = (1 + Math.log(tf)) * Math.log(N / df);
+            postingsList.get(i).score = tf * Math.log(N/df) / doc_len;
+        }
+        postingsList.sort();
+        System.out.println("Total tf " + totalTf);
+        return postingsList;
+    }
+
+    private PostingsList phraseIntersection(PostingsList postings1, PostingsList postings2){
         int i1 = 0;
         int i2 = 0;
         PostingsList answer = new PostingsList();
@@ -91,7 +151,7 @@ public class Searcher {
             //System.out.println("First: " +  i1 +  " second: " + i2);
             p1 = postings1.get(i1);
             p2 = postings2.get(i2);
-            // Optimization when there is no possiblity for contiguousness
+            // Optimization when there is no possibility for contiguousness
             //if (p1.docID == p2.docID && p1.getOffset(0) < p2.getOffset(0) && p1.getOffset(p1.size()-1) + 1 < p2.getOffset(0)) {
             if (p1.docID == p2.docID) {
                 int p1_offsetindex = 0;
@@ -118,85 +178,6 @@ public class Searcher {
         }
         return answer;
     }
-
-
-    //  public PostingsList phraseIntersection(PostingsList postings1, PostingsList postings2){
-    //      int i1 = 0;
-    //      int i2 = 0;
-    //      PostingsList answer = new PostingsList();
-    //      int i;
-    //      PostingsEntry p1 = new PostingsEntry();
-    //      PostingsEntry p2 = new PostingsEntry();
-    //      System.out.println();
-    //      while(i1 < postings1.size() && i2 < postings2.size()){
-    //          //System.out.println("First: " +  i1 +  " second: " + i2);
-    //          p1 = postings1.get(i1);
-    //          p2 = postings2.get(i2);
-    //          // Optimization when there is no possiblity for contiguousness
-    //          //if (p1.docID == p2.docID && p1.getOffset(0) < p2.getOffset(0) && p1.getOffset(p1.size()-1) + 1 < p2.getOffset(0)) {
-    //          if (p1.docID == p2.docID) {
-    //              PostingsEntry p_new = new PostingsEntry();
-    //              p_new = positionalEntryIntersect(p1,p2,p1.docID);
-    //              for (int j = 0; j < p_new.size();j++){
-    //                  answer.addID(p1.docID, p_new.getOffset(j));
-    //              }
-    //
-    //          }else if (p1.docID < p2.docID){
-    //              i1++;
-    //          }else{
-    //              i2++;
-    //          }
-    //      }
-    //      return answer;
-    //  }
-    //
-    //
-    //
-    //
-    //  private PostingsEntry positionalEntryIntersect(PostingsEntry pp1, PostingsEntry pp2, int docID){
-    //     PostingsEntry result = new PostingsEntry();
-    //     Iterator<Integer> i1 = pp1.iterator();
-    //     Iterator<Integer> i2 = pp2.iterator();
-    //     int offset = 1;
-    //
-    //     if(i1.hasNext() && i2.hasNext())
-    //     {
-    //         Integer pos1 = i1.next();
-    //         Integer pos2 = i2.next();
-    //
-    //         while(true)
-    //         {
-    //             Integer diff = pos2 - pos1;
-    //
-    //             if(diff.intValue() == offset){
-    //                 result.docID = docID;
-    //                 result.addOffset(pos2);
-    //                 if(i1.hasNext() && i2.hasNext()){
-    //                     pos1 = i1.next();
-    //                     pos2 = i2.next();
-    //                 }
-    //                 else
-    //                     break;
-    //             }
-    //             else if(diff.intValue() > offset){
-    //                 if(i1.hasNext())
-    //                     pos1 = i1.next();
-    //                 else break;
-    //
-    //             }
-    //             else{
-    //                 if(i2.hasNext())
-    //                     pos2 = i2.next();
-    //                 else break;
-    //            }
-    //
-    //         }
-    //     }
-    //     return result;
-    // }
-    //
-
-
 
     public PostingsList intersection(PostingsList postings1, PostingsList postings2){
         //System.out.println("Query words: " + query.queryterm.get(0).term + " and " + query.queryterm.get(1).term);

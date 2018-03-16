@@ -5,8 +5,6 @@
  *  Johan Boye, 2016
  */
 
-package ir;
-
 import java.io.*;
 import org.apache.pdfbox.cos.COSDocument;
 import org.apache.pdfbox.pdfparser.*;

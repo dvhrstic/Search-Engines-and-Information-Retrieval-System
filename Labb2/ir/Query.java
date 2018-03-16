@@ -3,9 +3,7 @@
  *   Information Retrieval course at KTH.
  * 
  *   Johan Boye, 2017
- */  
-
-package ir;
+ */
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;

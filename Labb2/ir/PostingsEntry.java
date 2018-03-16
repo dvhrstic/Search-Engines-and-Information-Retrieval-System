@@ -5,8 +5,6 @@
  *   Johan Boye, 2017
  */
 
-package ir;
-
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,8 +14,7 @@ import java.io.Serializable;
 public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 
     public int docID;
-    public double score = 0;
-    //public int offset;
+    public double score;
 
     private ArrayList<Integer> offsets = new ArrayList<Integer>();
 
@@ -33,11 +30,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 	return Double.compare( other.score, score );
     }
 
-    // public ArrayList<Integer> getOffset(){
-    //     return offsets;
-    //     //return offset;
-    // }
-
     public int getOffset(int i ){
         return offsets.get(i);
     }
@@ -46,9 +38,7 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
         return offsets.size();
     }
 
-    public double getScore(){
-        return score;
-    }
+    public int getTf(){ return this.size();}
 
     public void addOffset(int offset){
         if (!offsets.contains(offset)) offsets.add(offset);

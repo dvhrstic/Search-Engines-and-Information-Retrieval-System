@@ -5,8 +5,6 @@
  *   Johan Boye, 2017
  */
 
-package ir;
-
 import java.util.ArrayList;
 import java.io.File;
 
