@@ -1,0 +1,55 @@
+Query: "mathematics graduate degree UC Davis"
+Result: 
+0. Graduate_Groups.f, 1
+1. Mathematics.f, 3
+2. Private_Tutoring.f, 0
+3. Statistics.f, 2
+4. UCD_Honor_and_Prizes.f, 0
+5. UC_Davis_English_Department.f, 0 
+6. What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f, 0
+7. Wildlife%2C_Fish%2C_and_Conservation_Biology.f, 0
+
+Prevision = 3 / 8 ~ 0.375
+Recall = 3 / 100 = 0.03
+
+---------------------------------------------------------------
+Query: "mathematics graduate program UC Davis"
+Result:
+0. Candidate_Statements.f, RELEVANCE_SCORE = 0
+1. DOC_ID = Computer_Science.f, RELEVANCE_SCORE = 0
+2. DOC_ID = ECE_Course_Reviews.f, RELEVANCE_SCORE = 0
+3. DOC_ID = Economics.f, RELEVANCE_SCORE = 0
+4. DOC_ID = Elaine_Kasimatis.f, RELEVANCE_SCORE = 1
+5. DOC_ID = Evelyn_Silvia.f, RELEVANCE_SCORE = 1
+6. DOC_ID = Events_Calendars.f, RELEVANCE_SCORE = 0
+7. DOC_ID = Hydrology.f, RELEVANCE_SCORE = 0
+8. DOC_ID = Mathematics.f, RELEVANCE_SCORE = 3
+9. DOC_ID = MattHh.f, RELEVANCE_SCORE = 1
+10. DOC_ID = Private_Tutoring.f, RELEVANCE_SCORE = 0
+11. DOC_ID = Statistics.f, RELEVANCE_SCORE = 2
+12. DOC_ID = Student_Organizations.f, RELEVANCE_SCORE = 0
+13. DOC_ID = UCD_Honors_and_Prizes.f, RELEVANCE_SCORE = 0
+14. DOC_ID = UC_Davis_English_Department.f, RELEVANCE_SCORE = 0
+15. DOC_ID = University_Departments.f, RELEVANCE_SCORE = 1
+16. DOC_ID = What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f, RELEVANCE_SCORE=0
+17. DOC_ID = Wildlife%2C_Fish%2C_and_Conservation_Biology.f, RELEVANCE_SCORE = 0
+
+Precision = 6 / 18 ~ 0.33
+Recall = 6 / 100 = 0.06
+---------------------------------------------------------------
+Query: "mathematics graduate program UCD"
+Result:
+0. Candidate_Statements.f, RELEVANCE_SCORE = 0
+1. DOC_ID = document_translated.f, RELEVANCE_SCORE = 0
+2. DOC_ID = Elaine_Kasimatis.f, RELEVANCE_SCORE = 1
+3. DOC_ID = Evelyn_Silvia.f, RELEVANCE_SCORE = 1
+4. DOC_ID = Mathematics.f, RELEVANCE_SCORE = 3
+5. DOC_ID = MattHh.f, RELEVANCE_SCORE = 1
+6. DOC_ID = Private_Tutoring.f, RELEVANCE_SCORE = 0
+7. DOC_ID = Statistics.f, RELEVANCE_SCORE = 2
+8. DOC_ID = Student_Organizations.f, RELEVANCE_SCORE = 0
+9. DOC_ID = University_Departments.f, RELEVANCE_SCORE = 1
+10. DOC_ID = What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f, RELEVANCE_SCORE=0
+
+Precision = 6 / 11 ~ 0.54
+Recall = 6 / 100 = 0.06
