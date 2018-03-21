@@ -7,8 +7,8 @@ QUERY_ID = 1, DOC_ID = Evelyn_Silvia.f, RELEVANCE_SCORE = 1
 QUERY_ID = 1, DOC_ID = MattHh.f, RELEVANCE_SCORE = 1
 --> Reason for grading them with 1: For the query "graduate program mathematics" one may also think about the person who graduates program methematics and because the documents had information about the ex-students in the field of Mathematics the document ay be partially relevant.
 
-QUERY_ID = 1, DOC_ID = Statistics.f, RELEVANCE_SCORE = 2
---> Here the field of statistics is explained and statistics is related to the mathematics and therefore the grade 2.
+QUERY_ID = 1, DOC_ID = Society_for_Industrial_and_Applied_Mathematics.f, RELEVANCE_SCORE = 2
+--> The program club is for gradiates students in field of mathematics.
 
 Precision = 7 / 22 ~ 0.31
 Recall = 7 / 100 ~ 0.07

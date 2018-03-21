@@ -18,10 +18,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
  *   Processes a directory structure and indexes all PDF and text files.
  */
 public class Indexer {
-
     /** The index to be built up by this Indexer. */
-    Index index;
-
+	Index index;
     /** The next docID to be generated. */
     private int lastDocID = 0;
 
@@ -34,8 +32,7 @@ public class Indexer {
 
     /** Constructor */
     public Indexer( Index index, String patterns_file ) {
-	this.index = index;
-	this.patterns_file = patterns_file;
+		this.patterns_file = patterns_file;
     }
 
 
@@ -95,7 +92,7 @@ public class Indexer {
 		    while ( tok.hasMoreTokens() ) {
 			String token = tok.nextToken();
 			insertIntoIndex( docID, token, offset++ );
-		    }
+			}
 		    index.docLengths.put( docID, offset );
 		    reader.close();
 		}

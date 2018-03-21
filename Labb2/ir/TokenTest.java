@@ -23,7 +23,6 @@ public class TokenTest {
     boolean remove_punctuation = false;
     String patternsfile = null;
     String filename = null;
-
     /**
      *  Tokenizes and indexes the file @code{f}. If @code{f} is a directory,
      *  all its files and subdirectories are recursively processed.
@@ -67,7 +66,7 @@ public class TokenTest {
 		    PrintStream out = new PrintStream( System.out, true, "UTF-8" );
 		    while ( tok.hasMoreTokens() ) {
 			out.println( tok.nextToken() );
-		    }
+			}
 		    reader.close();
 		}
 		catch ( IOException e ) {

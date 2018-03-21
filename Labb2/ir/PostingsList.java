@@ -32,7 +32,8 @@ public class PostingsList{
     }
     /** Returns the ith posting. */
     public PostingsEntry get( int i ) {
-	return list.get( i );
+        
+        return list.get( i );
     }
 
     public int indexOf(int docID){
