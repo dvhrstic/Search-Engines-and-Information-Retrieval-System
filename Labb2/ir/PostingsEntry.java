@@ -18,7 +18,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 
     private ArrayList<Integer> offsets = new ArrayList<Integer>();
 
-
     /**
      *  PostingsEntries are compared by their score (only relevant
      *  in ranked retrieval).
@@ -43,7 +42,4 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     public void addOffset(int offset){
         if (!offsets.contains(offset)) offsets.add(offset);
     }
-    //
-    // YOUR CODE HERE
-    //
 }
