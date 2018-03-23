@@ -3,7 +3,7 @@ import java.io.*;
 
 public class PageRank {
 
-    /**  
+    /**
      *   Maximal number of documents. We're assuming here that we
      *   don't have more docs than we can keep in main memory;
      */
@@ -19,7 +19,7 @@ public class PageRank {
      */
     String[] docName = new String[MAX_NUMBER_OF_DOCS];
 
-    /**  
+    /**
      *   The transition matrix. p[i][j] = the probability that the
      *   random surfer clicks from page i to page j.
      */
@@ -37,18 +37,18 @@ public class PageRank {
     final static double BORED = 0.15;
 
     /**
-     *   In the initializaton phase, we use a negative number to represent 
+     *   In the initializaton phase, we use a negative number to represent
      *   that there is a direct link from a document to another.
      */
     final static double LINK = -1.0;
-    
+
     /**
-     *   Convergence criterion: Transition probabilities do not 
+     *   Convergence criterion: Transition probabilities do not
      *   change more that EPSILON from one iteration to another.
      */
     final static double EPSILON = 0.0001;
 
-    
+
     /* --------------------------------------------- */
 
 
@@ -63,7 +63,7 @@ public class PageRank {
 
 
     /**
-     *   Reads the documents and fills the data structures. When this method 
+     *   Reads the documents and fills the data structures. When this method
      *   finishes executing, <code>p[i][j] = LINK</code> if there is a direct
      *   link from i to j, and <code>p[i][j] = 0</code> otherwise.
      *   <p>
@@ -83,7 +83,7 @@ public class PageRank {
         Integer fromdoc = docNumber.get( title );
 
 		//  Have we seen this document before?
-		if ( fromdoc == null ) {	
+		if ( fromdoc == null ) {
 		    // This is a previously unseen doc, so add it to the table.
 		    fromdoc = fileIndex++;
 		    docNumber.put( title, fromdoc );
@@ -134,23 +134,26 @@ public class PageRank {
 
 
     /*
-     *   Initiates the probability matrix. 
+     *   Initiates the probability matrix.
      */
     void initiateProbabilityMatrix( int numberOfDocs ) {
+
+    double[][] pNormal = new double [numberOfDocs][numberOfDocs];
 
     // First row all the probabilities are 1/docNum
     for (int i = 0; i < numberOfDocs; i++){
         for(int j = 0; j < numberOfDocs; j++){
             if (p[i][j] == -1){
-                p[i][j] = 1.0 / out[i];  
+                pNormal[i][j] = (1.0 - BORED)/ out[i] + BORED / numberOfDocs;
             }else{
-                p[i][j] = 0;
+                pNormal[i][j] = BORED / numberOfDocs;
             }
         }
     }
+    p = pNormal;
     }
-	
-    
+
+
 
 
     /* --------------------------------------------- */
@@ -169,22 +172,45 @@ public class PageRank {
     double pageRank;
     int numIter = 0;
     // TODO lägg till en vilkor för att kolla vektorerna
-    while (numIter < maxIterations && True){
-        for (int i = 0; i < numberOfDocs; i++){
-            pageRank = 0;
-            for (int j = 0; j < p[i].length; j++){
-                if(p[i][j] > 0.0){
-                    pageRank += aCurr[j] / out[j];     
-                }
-            }
-            aNew[i] = pageRank;
-            }
-            aCurr = aNew;
-            numIter++;    
-        }
+    double diff = manhattan(subtract(aCurr,aNew));
+    while (numIter < maxIterations && diff > EPSILON){
 
+        aNew = multiply(aCurr, p);
+        diff = manhattan(subtract(aCurr,aNew));
+        numIter++;
+        // TODO maybe copy needs
+        aCurr = aNew;
     }
 
+  }
+
+    //KTH vector-matrix multiplication (y = x^T A)
+    public static double[] multiply(double[] x, double[][] a) {
+        int m = a.length;
+        int n = x.length;
+        if (x.length != m) throw new RuntimeException("Illegal matrix dimensions.");
+        double[] y = new double[n];
+        for (int j = 0; j < n; j++)
+            for (int i = 0; i < m; i++)
+                y[j] += a[i][j] * x[i];
+        return y;
+    }
+
+    public static double[] subtract(double[] x,double[] y) {
+        if (x.length != y.length)
+            throw new IllegalArgumentException("dimensions disagree");
+        double[] toReturn = new double[x.length];
+        for (int i = 0; i < x.length; i++)
+            toReturn[i] = x[i] - y[i];
+        return toReturn;
+    }
+
+    public static double manhattan(double[] x) {
+        double result = 0;
+        for (int i = 0; i < x.length; i++)
+            result += Math.abs(x[i]);
+        return result;
+    }
 
     /* --------------------------------------------- */
 
