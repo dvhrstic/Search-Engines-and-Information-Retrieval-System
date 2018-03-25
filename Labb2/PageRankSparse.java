@@ -142,26 +142,31 @@ public class PageRankSparse {
          if (!link.containsKey(j)){
            aNew.set(j, 0.0);
          }else{
-         HashMap<Integer, Boolean> outlinks = link.get(j);
-         double sum = 0.0;
-         for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
-           Integer i = outlink.getKey();
-           sum += BORED * aCurr.get((int)i) / out[i];
-
-           System.out.println(" Sm" + out[i]);
+           HashMap<Integer, Boolean> outlinks = link.get(j);
+           double sum = 0.0;
+           for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
+             Integer i = outlink.getKey();
+             if (out[i] == 0){
+               sum += 0.0;
+             }else{
+               sum += BORED * aCurr.get((int)i) / out[i];
+             }
            }
+
            aNew.set(j, sum);
          }
-          double aNewSum = 0.0;
-          for (double prob : aNew) {
-              aNewSum = aNewSum + prob;
-          }
-          double extraTerm = ((1.0 - aNewSum) / numberOfDocs);
-          boolean ret = Collections.addAll(aNew,extraTerm);
-          System.out.println(" Correct " + ret);
+       }
+       double aNewSum = 0.0;
+       for (double prob : aNew) {
+         aNewSum = aNewSum + prob;
+       }
+
+       double extraTerm = ((1.0 - aNewSum) / numberOfDocs);
+       for (int k = 0; k < aNew.size(); k++){
+         aNew.set(k, aNew.get(k) + extraTerm);
        }
        aCurr = aNew;
-      System.out.println(aCurr.get(0));
+       System.out.println(aCurr.get(0));
      }
 
 
@@ -185,6 +190,7 @@ public class PageRankSparse {
 
 
     /* --------------------------------------------- */
+
 
 
     public static void main( String[] args ) {
