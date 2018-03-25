@@ -144,10 +144,12 @@ public class PageRank {
     // First row all the probabilities are 1/docNum
     for (int i = 0; i < numberOfDocs; i++){
         for(int j = 0; j < numberOfDocs; j++){
-            if (p[i][j] == -1){
-                pNormal[i][j] = (1.0 - BORED)/ out[i] + BORED / numberOfDocs;
+          if(out[i] == 0){
+            pNormal[i][j] = 1.0 / numberOfDocs;
+          }else if(p[i][j] == LINK){
+                pNormal[i][j] = (double)(1.0 - BORED)/ out[i] + (double)BORED / numberOfDocs;
             }else{
-                pNormal[i][j] = BORED / numberOfDocs;
+                pNormal[i][j] = (double)BORED / numberOfDocs;
             }
         }
     }
@@ -178,8 +180,7 @@ public class PageRank {
 
         aNew = multiply(aCurr, p);
         diff = manhattan(subtract(aCurr,aNew));
-        // TODO maybe copy needs
-        aCurr = aNew;        
+        aCurr = aNew;
         numIter++;
     }
 
@@ -189,13 +190,13 @@ public class PageRank {
     Arrays.sort(aSorted);
     aSorted = reverseArray(aSorted);
     System.out.println(aSorted.length == aCurr.length);
-    
+
     int topDocs = 30;
     int docIndex;
     double[] resDocs = new double[topDocs];
     for(int i = 0; i < topDocs;i++){
         docIndex = positionOf(aCurr, aSorted[i]);
-        System.out.println(docName[docIndex] + " "  + aCurr[docIndex]);
+        System.out.println(docName[docIndex] + " " + docNumber.get(docName[docIndex]) +   + aCurr[docIndex]);
         //aCurr[i] = -1;
 
     }
