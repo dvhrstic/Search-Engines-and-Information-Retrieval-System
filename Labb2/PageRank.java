@@ -1,5 +1,6 @@
 import java.util.*;
 import java.io.*;
+import java.lang.reflect.Array;
 
 public class PageRank {
 
@@ -79,7 +80,7 @@ public class PageRank {
 	    while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ) {
 		int index = line.indexOf( ";" );
         String title = line.substring( 0, index );
-        System.out.println(title);
+        //System.out.println(title);
         Integer fromdoc = docNumber.get( title );
 
 		//  Have we seen this document before?
@@ -89,8 +90,8 @@ public class PageRank {
 		    docNumber.put( title, fromdoc );
 		    docName[fromdoc] = title;
         }
-        System.out.println(this.docName[fromdoc]);
-        System.out.println();
+        //System.out.println(this.docName[fromdoc]);
+        //System.out.println();
 		// Check all outlinks.
 		StringTokenizer tok = new StringTokenizer( line.substring(index+1), "," );
 		while ( tok.hasMoreTokens() && fileIndex<MAX_NUMBER_OF_DOCS ) {
@@ -165,27 +166,70 @@ public class PageRank {
      */
     void iterate( int numberOfDocs, int maxIterations ) {
 
-    double[] aCurr = new aCurr[numberOfDocs];
-    double[] aNew = new aCurr[numberOfDocs];
-    Arrays.fill(aCurr, 1 / numberOfDocs);
-    Arrays.fill(aNew, 0);
+    double[] aCurr = new double[numberOfDocs];
+    double[] aNew = new double[numberOfDocs];
+    Arrays.fill(aCurr, 1.0 / numberOfDocs);
+    Arrays.fill(aNew, 0.0);
     double pageRank;
     int numIter = 0;
     // TODO lägg till en vilkor för att kolla vektorerna
-    double diff = manhattan(subtract(aCurr,aNew));
+    double diff = Math.abs(manhattan(subtract(aCurr,aNew)));
     while (numIter < maxIterations && diff > EPSILON){
 
         aNew = multiply(aCurr, p);
         diff = manhattan(subtract(aCurr,aNew));
-        numIter++;
         // TODO maybe copy needs
-        aCurr = aNew;
+        aCurr = aNew;        
+        numIter++;
     }
 
-  }
+    //System.out.println(aCurr[0] + "," + aCurr[1]);
+    double[] aSorted = new double[numberOfDocs];
+    aSorted = copyFromTo(aCurr, aSorted);
+    Arrays.sort(aSorted);
+    aSorted = reverseArray(aSorted);
+    System.out.println(aSorted.length == aCurr.length);
+    
+    int topDocs = 30;
+    int docIndex;
+    double[] resDocs = new double[topDocs];
+    for(int i = 0; i < topDocs;i++){
+        docIndex = positionOf(aCurr, aSorted[i]);
+        System.out.println(docName[docIndex] + " "  + aCurr[docIndex]);
+        //aCurr[i] = -1;
 
-    //KTH vector-matrix multiplication (y = x^T A)
-    public static double[] multiply(double[] x, double[][] a) {
+    }
+   // System.out.println(Arrsays.toString(resDocs));
+}
+
+    public double[] reverseArray(double[] arr){
+        for(int i=0; i<arr.length/2; i++){
+            double temp = arr[i];
+            arr[i] = arr[arr.length -i -1];
+            arr[arr.length -i -1] = temp;
+          }
+        return arr;
+
+    }
+
+    public int positionOf(double[] a, double prob){
+        for (int i = 0; i < a.length; i++){
+            if(a[i] == prob){
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public double[] copyFromTo(double[] aCurr, double[] aNew ){
+        for(int i = 0; i < aCurr.length; i++){
+            aNew[i] = aCurr[i];
+        }
+        return aNew;
+    }
+
+    // Multiplying a vector with a matrix
+    public double[] multiply(double[] x, double[][] a) {
         int m = a.length;
         int n = x.length;
         if (x.length != m) throw new RuntimeException("Illegal matrix dimensions.");
