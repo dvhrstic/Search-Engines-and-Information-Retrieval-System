@@ -195,10 +195,14 @@ public class PageRank {
     int docIndex;
     double[] resDocs = new double[topDocs];
     for(int i = 0; i < topDocs;i++){
-        docIndex = positionOf(aCurr, aSorted[i]);
-        System.out.println(docName[docIndex] + " " + docNumber.get(docName[docIndex]) +   + aCurr[docIndex]);
-        //aCurr[i] = -1;
 
+        docIndex = positionOf(aCurr, aSorted[i]);
+        if (docIndex != 0.0) {
+          System.out.println(aSorted[i]);
+          System.out.println(Arrays.asList(aCurr).contains(aSorted[i]));
+        }
+        System.out.println(docName[docIndex] + ", links1000: " + docNumber.get(docName[docIndex]) + ": "  + aCurr[docIndex]);
+        //aCurr[i] = 0;
     }
    // System.out.println(Arrsays.toString(resDocs));
 }

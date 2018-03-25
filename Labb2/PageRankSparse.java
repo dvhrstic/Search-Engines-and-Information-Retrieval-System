@@ -3,7 +3,7 @@ import java.io.*;
 
 public class PageRankSparse {
 
-    /**  
+    /**
      *   Maximal number of documents. We're assuming here that we
      *   don't have more docs than we can keep in main memory.
      */
@@ -19,15 +19,15 @@ public class PageRankSparse {
      */
     String[] docName = new String[MAX_NUMBER_OF_DOCS];
 
-    /**  
+    /**
      *   A memory-efficient representation of the transition matrix.
-     *   The outlinks are represented as a HashMap, whose keys are 
+     *   The outlinks are represented as a HashMap, whose keys are
      *   the numbers of the documents linked from.<p>
      *
-     *   The value corresponding to key i is a HashMap whose keys are 
+     *   The value corresponding to key i is a HashMap whose keys are
      *   all the numbers of documents j that i links to.<p>
      *
-     *   If there are no outlinks from i, then the value corresponding 
+     *   If there are no outlinks from i, then the value corresponding
      *   key i is null.
      */
     HashMap<Integer,HashMap<Integer,Boolean>> link = new HashMap<Integer,HashMap<Integer,Boolean>>();
@@ -44,12 +44,12 @@ public class PageRankSparse {
     final static double BORED = 0.15;
 
     /**
-     *   Convergence criterion: Transition probabilities do not 
+     *   Convergence criterion: Transition probabilities do not
      *   change more that EPSILON from one iteration to another.
      */
     final static double EPSILON = 0.0001;
 
-       
+
     /* --------------------------------------------- */
 
 
@@ -63,7 +63,7 @@ public class PageRankSparse {
 
 
     /**
-     *   Reads the documents and fills the data structures. 
+     *   Reads the documents and fills the data structures.
      *
      *   @return the number of documents read.
      */
@@ -78,7 +78,7 @@ public class PageRankSparse {
 		String title = line.substring( 0, index );
 		Integer fromdoc = docNumber.get( title );
 		//  Have we seen this document before?
-		if ( fromdoc == null ) {	
+		if ( fromdoc == null ) {
 		    // This is a previously unseen doc, so add it to the table.
 		    fromdoc = fileIndex++;
 		    docNumber.put( title, fromdoc );
@@ -131,11 +131,57 @@ public class PageRankSparse {
      *   Chooses a probability vector a, and repeatedly computes
      *   aP, aP^2, aP^3... until aP^i = aP^(i+1).
      */
-    void iterate( int numberOfDocs, int maxIterations ) {
 
-	// YOUR CODE HERE
+     void iterate( int numberOfDocs, int maxIterations ) {
+       // By doing this we do not have to set a[j] = 0
+       List<Double> aCurr = new ArrayList<Double>(Collections.nCopies(numberOfDocs,1.0/numberOfDocs));
+       List<Double> aNew = new ArrayList<Double>(Collections.nCopies(numberOfDocs,0.0));
+       System.out.println(link.size());
+       System.out.println(numberOfDocs);
+       for (int j = 0; j < numberOfDocs; j++) {
+         if (!link.containsKey(j)){
+           aNew.set(j, 0.0);
+         }else{
+         HashMap<Integer, Boolean> outlinks = link.get(j);
+         double sum = 0.0;
+         for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
+           Integer i = outlink.getKey();
+           sum += BORED * aCurr.get((int)i) / out[i];
 
-    }
+           System.out.println(" Sm" + out[i]);
+           }
+           aNew.set(j, sum);
+         }
+          double aNewSum = 0.0;
+          for (double prob : aNew) {
+              aNewSum = aNewSum + prob;
+          }
+          double extraTerm = ((1.0 - aNewSum) / numberOfDocs);
+          boolean ret = Collections.addAll(aNew,extraTerm);
+          System.out.println(" Correct " + ret);
+       }
+       aCurr = aNew;
+      System.out.println(aCurr.get(0));
+     }
+
+
+
+    // void iterate( int numberOfDocs, int maxIterations ) {
+    //   // By doing this we do not have to set a[j] = 0
+    //   List<Double> a = new ArrayList<Double>(Collections.nCopies(numberOfDocs,1.0/numberOfDocs));
+    //   System.out.println(link.size());
+    //   System.out.println(numberOfDocs);
+    //   for (Map.Entry<Integer, HashMap<Integer, Boolean>> entry : link.entrySet()) {
+    //     Integer key = entry.getKey();
+    //     HashMap<Integer, Boolean> outlinks = entry.getValue();
+    //
+    //     for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
+    //       Integer toDoc = outlink.getKey();
+    //       Boolean conectionExist = outlink.getValue();
+    //       //System.out.print(" " + (int)toDoc + " - " + (Boolean)conectionExist);
+    //       }
+    //   }
+    // }
 
 
     /* --------------------------------------------- */
