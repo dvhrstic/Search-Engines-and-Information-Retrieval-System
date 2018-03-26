@@ -59,6 +59,7 @@ public class PageRankSparse {
     }
 
 
+
     /* --------------------------------------------- */
 
 
@@ -138,37 +139,79 @@ public class PageRankSparse {
        List<Double> aNew = new ArrayList<Double>(Collections.nCopies(numberOfDocs,0.0));
        System.out.println(link.size());
        System.out.println(numberOfDocs);
-       for (int j = 0; j < numberOfDocs; j++) {
-         if (!link.containsKey(j)){
-           aNew.set(j, 0.0);
-         }else{
-           HashMap<Integer, Boolean> outlinks = link.get(j);
-           double sum = 0.0;
-           for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
-             Integer i = outlink.getKey();
-             if (out[i] == 0){
-               sum += 0.0;
-             }else{
-               sum += BORED * aCurr.get((int)i) / out[i];
+       double diff = Math.abs(manhattan(subtract(aCurr,aNew)));
+       int numIter = 0;
+       while (numIter < maxIterations && diff > EPSILON){
+         for (int j = 0; j < numberOfDocs; j++) {
+           if (!link.containsKey(j)){
+             System.out.println(" Doesn't contain " + j);
+             aNew.set(j, 0.0);
+           }else{
+             HashMap<Integer, Boolean> outlinks = link.get(j);
+             double sum = 0.0;
+             for (Map.Entry<Integer, Boolean> outlink : outlinks.entrySet()) {
+               int i = outlink.getKey();
+               if (out[i] == 0){
+                 sum += 0.0;
+               }else{
+                 sum += BORED * aCurr.get(i) / out[i];
+               }
              }
+             System.out.println("Contains " + j);
+             aNew.set(j, sum);
            }
-
-           aNew.set(j, sum);
          }
+         double aNewSum = 0.0;
+         for (double prob : aNew) {
+           aNewSum = aNewSum + prob;
+         }
+         double extraTerm = ((1.0 - aNewSum) / numberOfDocs);
+         for (int k = 0; k < aNew.size(); k++){
+           aNew.set(k, aNew.get(k) + extraTerm);
+         }
+         double sum2 = aNew.stream().mapToDouble(Double::doubleValue).sum();
+         double sum3 = aCurr.stream().mapToDouble(Double::doubleValue).sum();
+         //System.out.println(sum2 + " " + sum3);
+         System.out.println(aNew.get(10) + ", " + aCurr.get(10));
+         diff = Math.abs(manhattan(subtract(aCurr,aNew)));
+         aCurr = aNew;
+         System.out.println(" Diff is " + diff);
+         numIter++;
        }
-       double aNewSum = 0.0;
-       for (double prob : aNew) {
-         aNewSum = aNewSum + prob;
+       System.out.println("number of iterations" + numIter);
+       Map<Double, String> topDocs = new TreeMap<Double, String>(Collections.reverseOrder());
+       int docIx = 0;
+       for(double prob : aNew){
+         topDocs.put(prob, docName[docIx]);
+         docIx++;
+       }
+       int i = 1;
+       for (Map.Entry<Double, String> docEntry : topDocs.entrySet()) {
+         System.out.println(docEntry.getValue() + ": " + docEntry.getKey());
+         if(i >= 30)
+         break;
+         i++;
        }
 
-       double extraTerm = ((1.0 - aNewSum) / numberOfDocs);
-       for (int k = 0; k < aNew.size(); k++){
-         aNew.set(k, aNew.get(k) + extraTerm);
-       }
-       aCurr = aNew;
-       System.out.println(aCurr.get(0));
      }
 
+
+
+     public static double[] subtract(List<Double> x,List<Double> y) {
+         if (x.size() != y.size())
+             throw new IllegalArgumentException("dimensions disagree");
+         double[] toReturn = new double[x.size()];
+         for (int i = 0; i < x.size(); i++)
+             toReturn[i] = x.get(i) - y.get(i);
+         return toReturn;
+     }
+
+     public static double manhattan(double[] x) {
+         double result = 0;
+         for (int i = 0; i < x.length; i++)
+             result += Math.abs(x[i]);
+         return result;
+     }
 
 
     // void iterate( int numberOfDocs, int maxIterations ) {
