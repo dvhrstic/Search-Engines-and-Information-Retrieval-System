@@ -1,7 +1,7 @@
 import java.util.*;
 import java.io.*;
 
-public class PageRankSparse {
+public class PageRankSparse2 {
 
     /**
      *   Maximal number of documents. We're assuming here that we
@@ -53,7 +53,7 @@ public class PageRankSparse {
     /* --------------------------------------------- */
 
 
-    public PageRankSparse( String filename ) {
+    public PageRankSparse2( String filename ) {
 	int noOfDocs = readDocs( filename );
 	iterate( noOfDocs, 1000 );
     }
@@ -142,28 +142,31 @@ public class PageRankSparse {
        double diff = Math.abs(manhattan(subtract(aCurr,aNew)));
        int numIter = 0;
        while (numIter < maxIterations && diff > EPSILON){
-        
-         
-        for (int j = 0; j < numberOfDocs; j++) {
-           aNew.set(j, BORED / numberOfDocs);
+         for (int j = 0; j < numberOfDocs; j++) {
+           if (!link.containsKey(j)){
+             aNew.set(j, 0.0);
+             //System.out.println(" out is " + 1.0 / numberOfDocs);
+           }else{
              double sum = 0.0;
-             
              for (int i = 0; i < numberOfDocs; i++){
                  if(link.containsKey(i)){
                     HashMap<Integer, Boolean> outlinks = link.get(i);
-                    if (outlinks.containsKey(j)){                       
-                            sum += (1 - BORED) * aCurr.get(i) / out[i];                          
+                    if (outlinks.containsKey(j)){
+                        
+                        if (out[i] == 0){
+                            System.out.println("ERROR");
+                            sum += 0.0;
+                          }else{
+                            sum += BORED * aCurr.get(i) / out[i];
+                            
+                          }
                     }
-                }
-                else{
-                        sum += aCurr.get(i) * (1 - BORED) / numberOfDocs;
-                    }
-                    
                  }
+             }
              aNew.set(j, sum);
            }
            
-         
+         }
          double aNewSum = 0.0;
          for (double prob : aNew) {
            aNewSum = aNewSum + prob;
@@ -178,7 +181,7 @@ public class PageRankSparse {
          //System.out.println(sum2 + " " + sum3);
          System.out.println(aCurr.get(100) + ", " + aNew.get(100));
          diff = Math.abs(manhattan(subtract(aCurr,aNew)));
-         aCurr = new ArrayList<Double>(aNew);
+         aCurr = aNew;
          
          numIter++;
        }
@@ -197,10 +200,8 @@ public class PageRankSparse {
          break;
          i++;
        }
-    }
 
-     
-    
+     }
 
 
 
@@ -248,7 +249,7 @@ public class PageRankSparse {
 	    System.err.println( "Please give the name of the link file" );
 	}
 	else {
-	    new PageRankSparse( args[0] );
+	    new PageRankSparse2( args[0] );
 	}
     }
 }
