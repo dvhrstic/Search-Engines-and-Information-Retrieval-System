@@ -43,9 +43,6 @@ public class Searcher {
             while (line != null) {
                 currId = Integer.parseInt(line.split("\\s+")[0]);
                 currRank = Double.parseDouble(line.split("\\s+")[1]);
-                if(currRank > maxRank){
-                    maxRank = currRank;
-                }
                 pageRanks.put(currId, currRank);
                 line = br.readLine();
             }
@@ -118,6 +115,8 @@ public class Searcher {
         PostingsList rankedPos = new PostingsList();
         double wTq;
         double wFtd;
+        double rankPercent = 0.9;
+        double docLength;
         maxTfIdf = 0.0;
         for (Query.QueryTerm searchQuery : query.queryterm){
             String queryWord = searchQuery.term;
@@ -134,9 +133,15 @@ public class Searcher {
                     }
                 }   
                     wFtd = postingsEntry.getTf() * wTq;
+                    docLength = index.docLengths.get(postingsEntry.docID);
                     rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wFtd;
-                    if(rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score > maxTfIdf){
-                        maxTfIdf = rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score;
+                    if(rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score / docLength  > maxTfIdf){
+                        maxTfIdf = rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score / docLength;
+                    }
+                    if(pageRanks.containsKey(postingsEntry.docID)){
+                        if (maxRank < pageRanks.get(postingsEntry.docID)){
+                            maxRank = pageRanks.get(postingsEntry.docID);
+                        }
                     }
             }
         }
@@ -149,20 +154,20 @@ public class Searcher {
             // Each score (tfifd and pagerank) is divided with respective
             //  max values. Those two numbers are later summed up and they
             //  represent the final score.
-
             if (rankingType == RankingType.TF_IDF){
-                rankedPos.get(k).score = (rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID)) / maxTfIdf ;
+                rankedPos.get(k).score = (rankedPos.get(k).score  / index.docLengths.get(docID) ) * 100 / maxTfIdf;
             }else if (rankingType == RankingType.COMBINATION){
                 if (!pageRanks.containsKey(docID)){
-                    rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID) / maxTfIdf;    
+                    rankedPos.get(k).score = (1-rankPercent) * ( rankedPos.get(k).score / index.docLengths.get(docID) ) * 100 / maxTfIdf;    
                 }else{
-                rankedPos.get(k).score = pageRanks.get(docID) / maxRank + ( rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID) ) / maxTfIdf;
+                rankedPos.get(k).score = rankPercent *  pageRanks.get(docID) * 100 / maxRank + 
+                                        (1 - rankPercent) * ( rankedPos.get(k).score / index.docLengths.get(docID) ) * 100 / maxTfIdf;
                 }
             }else if (rankingType == RankingType.PAGERANK){
                 if (!pageRanks.containsKey(docID)){
                     rankedPos.get(k).score = 0.0;
                 }else{
-                    rankedPos.get(k).score = pageRanks.get(docID) / maxRank;
+                    rankedPos.get(k).score = pageRanks.get(docID) * 100 / maxRank;
                 }
             }
         }
