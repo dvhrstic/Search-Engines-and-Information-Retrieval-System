@@ -143,7 +143,7 @@ public class PageRankSparse {
        int numIter = 0;
        while (numIter < maxIterations && diff > EPSILON){
         
-         
+        System.out.println(" Diff : " + diff);
         for (int j = 0; j < numberOfDocs; j++) {
            aNew.set(j, BORED / numberOfDocs);
              double sum = 0.0;
@@ -168,7 +168,6 @@ public class PageRankSparse {
          for (double prob : aNew) {
            aNewSum = aNewSum + prob;
          }
-         System.out.println(" Sum is" + aNewSum);
          double extraTerm = (1.0 - aNewSum) / numberOfDocs;
          for (int k = 0; k < aNew.size(); k++){
            aNew.set(k, aNew.get(k) + extraTerm);
@@ -176,27 +175,35 @@ public class PageRankSparse {
          //double sum2 = aNew.stream().mapToDouble(Double::doubleValue).sum();
          //double sum3 = aCurr.stream().mapToDouble(Double::doubleValue).sum();
          //System.out.println(sum2 + " " + sum3);
-         System.out.println(aCurr.get(100) + ", " + aNew.get(100));
+         //System.out.println(aCurr.get(100) + ", " + aNew.get(100));
          diff = Math.abs(manhattan(subtract(aCurr,aNew)));
+
          aCurr = new ArrayList<Double>(aNew);
          
          numIter++;
        }
+
        System.out.println(" Diff is " + diff);
-       System.out.println("number of iterations" + numIter);
+       System.out.println("number of iterations: " + numIter);
        Map<Double, String> topDocs = new TreeMap<Double, String>(Collections.reverseOrder());
        int docIx = 0;
        for(double prob : aNew){
          topDocs.put(prob, docName[docIx]);
          docIx++;
        }
+       try {
+       PrintWriter writer = new PrintWriter("pageranks.txt", "UTF-8");
        int i = 1;
        for (Map.Entry<Double, String> docEntry : topDocs.entrySet()) {
-         System.out.println(docEntry.getValue() + ": " + docEntry.getKey());
-         if(i >= 30)
-         break;
+         if(i >= 30)System.out.println(docEntry.getValue() + ": " + docEntry.getKey());
+         writer.println(docEntry.getValue() + " " + docEntry.getKey());
          i++;
        }
+       writer.close();
+    } catch (IOException e){
+            System.err.println("Something went wrong");
+        }
+    
     }
 
      

@@ -1,16 +1,12 @@
+import java.util.*;
+import java.io.*;
 /*
  *   This file is part of the computer assignment for the
  *   Information Retrieval course at KTH.
  *
  *   Johan Boye, 2017
  */
-
-import java.util.Collections;
-import java.util.Comparator;
 import java.lang.*;
-import java.util.Iterator;
-import java.util.Vector;
-import java.util.ArrayList;
 
 /**
  *  Searches an index for results of a query.
@@ -20,6 +16,7 @@ public class Searcher {
     /** The index to be searched by this Searcher. */
     Index index;
 
+    Map<Integer, Double> pageRanks;
     /** Constructor */
     public Searcher( Index index ) {
         this.index = index;
@@ -30,9 +27,30 @@ public class Searcher {
      *  @return A postings list representing the result of the query.
      */
     public PostingsList search( Query query, QueryType queryType, RankingType rankingType ) {
-        //System.out.println();
+        // Reads the pageranks file
+        pageRanks = new HashMap<Integer, Double>();
+
+        try(BufferedReader br = new BufferedReader(new FileReader("pageranks.txt"))) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+        
+            while (line != null) {
+                pageRanks.put(Integer.parseInt(line.split("\\s+")[0]),Double.parseDouble(line.split("\\s+")[1]));
+                line = br.readLine();
+            }
+           // String everything = sb.toString();
+        } catch (IOException e) {System.err.println(" File exception");}
+
+        int ij = 0;
+        
+/*         for (Map.Entry<Integer, Double> rankEntry : pageRanks.entrySet()) {
+            if(ij <= 30){System.out.println(rankEntry.getKey() + ": " + rankEntry.getValue());
+            ij++;
+          }else break;
+        } */
+
+        //System.out.println(" Test 337 has " + pageRanks.get(2);
         int wcount = 0;
-        System.out.println(" WHATTTT");
         PostingsList answer = new PostingsList();
         System.out.print("Search word(s)");
         for (Query.QueryTerm searchQuery : query.queryterm){
@@ -42,7 +60,7 @@ public class Searcher {
         System.out.println();
         if (wcount < 2){
             if (index.getPostings(query.queryterm.get(0).term) != null){
-                if (queryType == QueryType.RANKED_QUERY){ return singleRanked(index.getPostings(query.queryterm.get(0).term));}
+                if (queryType == QueryType.RANKED_QUERY){ return singleRanked(index.getPostings(query.queryterm.get(0).term), rankingType);}
                 else{return index.getPostings(query.queryterm.get(0).term);}
                 }
             else
@@ -51,7 +69,7 @@ public class Searcher {
                 return null;
             }
         }else{
-            if (queryType == QueryType.RANKED_QUERY){return  multiRanked(query);}
+            if (queryType == QueryType.RANKED_QUERY){return  multiRanked(query, rankingType);}
             ArrayList<PostingsList> postings = new ArrayList<PostingsList>();
             int i;
             for (i = 0; i < wcount; i++){
@@ -85,7 +103,7 @@ public class Searcher {
      * @param query containing all the search words
      * @return sorted PostingsList
      */
-    private PostingsList multiRanked(Query query){
+    private PostingsList multiRanked(Query query, RankingType rankingType){
         PostingsList rankedPos = new PostingsList();
         double wTq;
         double wFtd;
@@ -112,14 +130,33 @@ public class Searcher {
             }
         }
         for (int k = 0; k < rankedPos.size(); k++){
-            rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+            // docID is meant for pageRank hashmap in order
+            //  to find appropriate document. While rankedPos
+            //  uses k to find the respective text.
+            int docID = rankedPos.get(k).docID;
+            //int rankedDocInx = rankedPos.indexOf(docID);
+            if (rankingType == RankingType.TF_IDF){
+                rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+            }else if (rankingType == RankingType.COMBINATION){
+                if (!pageRanks.containsKey(docID)){
+                    rankedPos.get(k).score = 0.5 * rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);    
+                }else{
+                rankedPos.get(k).score = 0.5 * pageRanks.get(docID) + 0.5 * rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+                }
+            }else if (rankingType == RankingType.PAGERANK){
+                if (!pageRanks.containsKey(docID)){
+                    rankedPos.get(k).score = 0.0;
+                }else{
+                    rankedPos.get(k).score = pageRanks.get(docID);
+                }
+            }
         }
         rankedPos.sort();
         return rankedPos;
     }
 
 
-    private PostingsList singleRanked(PostingsList postingsList){
+    private PostingsList singleRanked(PostingsList postingsList, RankingType rankingType){
         int N = index.docNames.size();
         int df = postingsList.size();
         int i, tf, doc_len, doc_id;
@@ -131,12 +168,23 @@ public class Searcher {
             totalTf += tf;
             doc_id = p.docID;
             doc_len = index.docLengths.get(doc_id);
-            //System.out.println("Results" + ", " + tf  + ", " + index.docNames.get(doc_id) + ", " + doc_len + " score : " + (1 + Math.log(tf)) * Math.log(N / df));
-            //postingsList.get(i).score = (1 + Math.log(tf)) * Math.log(N / df);
-            postingsList.get(i).score = tf * Math.log(N/df) / doc_len;
+            if (rankingType == RankingType.TF_IDF){
+                postingsList.get(i).score = tf * Math.log(N/df) / doc_len;
+            }else if (rankingType == RankingType.COMBINATION){
+                if (!pageRanks.containsKey(doc_id)){
+                    postingsList.get(i).score = 0.5 * tf * Math.log(N/df) / doc_len;
+                }else{
+                postingsList.get(i).score = 0.5 * pageRanks.get(doc_id) + 0.5 * tf * Math.log(N/df) / doc_len;
+                }
+            } else if (rankingType == RankingType.PAGERANK){
+                if (!pageRanks.containsKey(doc_id)){
+                    postingsList.get(i).score = 0.0;
+                }else{
+                postingsList.get(i).score =  pageRanks.get(doc_id);
+                }
+            }
         }
         postingsList.sort();
-        System.out.println("Total tf " + totalTf);
         return postingsList;
     }
 
