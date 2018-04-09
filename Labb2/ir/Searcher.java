@@ -16,6 +16,10 @@ public class Searcher {
     /** The index to be searched by this Searcher. */
     Index index;
 
+    /** Used for calculating the combined rank score */
+    private double maxRank;
+    private double maxTfIdf; 
+
     Map<Integer, Double> pageRanks;
     /** Constructor */
     public Searcher( Index index ) {
@@ -33,9 +37,16 @@ public class Searcher {
         try(BufferedReader br = new BufferedReader(new FileReader("pageranks.txt"))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
-        
+            
+            double currRank;
+            int currId;
             while (line != null) {
-                pageRanks.put(Integer.parseInt(line.split("\\s+")[0]),Double.parseDouble(line.split("\\s+")[1]));
+                currId = Integer.parseInt(line.split("\\s+")[0]);
+                currRank = Double.parseDouble(line.split("\\s+")[1]);
+                if(currRank > maxRank){
+                    maxRank = currRank;
+                }
+                pageRanks.put(currId, currRank);
                 line = br.readLine();
             }
            // String everything = sb.toString();
@@ -107,6 +118,7 @@ public class Searcher {
         PostingsList rankedPos = new PostingsList();
         double wTq;
         double wFtd;
+        maxTfIdf = 0.0;
         for (Query.QueryTerm searchQuery : query.queryterm){
             String queryWord = searchQuery.term;
             PostingsList postingsCurr = index.getPostings(queryWord);
@@ -120,34 +132,37 @@ public class Searcher {
                     for (int i = 0; i < postingsEntry.size();i++) {
                         rankedPos.addID(postingsEntry.docID, postingsEntry.getOffset(i));
                     }
-                }
-                    //System.out.println(" Doc id :" + postingsEntry.docID);
+                }   
                     wFtd = postingsEntry.getTf() * wTq;
-                    //System.out.println(" position " + postingsCurr.indexOf(postingsEntry));
-                   //rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wTq * wFtd;
                     rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wFtd;
-                    //System.out.println(rankedPos.get(postingsCurr.indexOf(postingsEntry)).score);
+                    if(rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score > maxTfIdf){
+                        maxTfIdf = rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score;
+                    }
             }
         }
         for (int k = 0; k < rankedPos.size(); k++){
             // docID is meant for pageRank hashmap in order
             //  to find appropriate document. While rankedPos
-            //  uses k to find the respective text.
+            //  uses k to find respective text.
             int docID = rankedPos.get(k).docID;
-            //int rankedDocInx = rankedPos.indexOf(docID);
+
+            // Each score (tfifd and pagerank) is divided with respective
+            //  max values. Those two numbers are later summed up and they
+            //  represent the final score.
+
             if (rankingType == RankingType.TF_IDF){
-                rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+                rankedPos.get(k).score = (rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID)) / maxTfIdf ;
             }else if (rankingType == RankingType.COMBINATION){
                 if (!pageRanks.containsKey(docID)){
-                    rankedPos.get(k).score = 0.5 * rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);    
+                    rankedPos.get(k).score = rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID) / maxTfIdf;    
                 }else{
-                rankedPos.get(k).score = 0.5 * pageRanks.get(docID) + 0.5 * rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID);
+                rankedPos.get(k).score = pageRanks.get(docID) / maxRank + ( rankedPos.get(k).score / index.docLengths.get(rankedPos.get(k).docID) ) / maxTfIdf;
                 }
             }else if (rankingType == RankingType.PAGERANK){
                 if (!pageRanks.containsKey(docID)){
                     rankedPos.get(k).score = 0.0;
                 }else{
-                    rankedPos.get(k).score = pageRanks.get(docID);
+                    rankedPos.get(k).score = pageRanks.get(docID) / maxRank;
                 }
             }
         }
