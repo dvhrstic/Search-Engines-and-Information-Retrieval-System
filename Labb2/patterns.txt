@@ -9,30 +9,38 @@
 // with "//" are comments.
 
 // ADD YOUR PATTERNS HERE
-// e.g. https://asdawdaweew
-https?:\/\/([^\s])+
+//E mail adress
+.+\@.+\.\w+
+
+// Web cites
+^https?\:\/\/(w{3})?(\w+).[a-z0-9\W\D\S]+
+
 // Twenty-four seven
 \d+/\d+
-// e.g. +65434234436
-\+(\d+)
-// e.g. $100
-\$(\d+)
-// e.g. weew-waeaw-asdasd
+
+// +123123123 or dollar currency
+[\+ $](\d+)
+
+// capturing groups of words
 \w+(-\w+)+
-// e.g. 123.123.4252
+
+// capturing groups of numbers with '.'
 \d+(\.\d+)+
-// e.g. e.g. or e.g
-\w{1}(\.\w{1}[\s|\.])+
-// e.g. ---
--(-)+
-// e.g.12312,343
-\d+(,\d+)+
-// e.g.12312:343
-\d+(:\d+)+
+
+// abbreviations like i.e. b.c.
+\w\.\w\.
+
+// Lines --
+\-\-
+
+// capturing group of numbers with ',' or ';'
+\d+([, :]\d+)+
+
 // e.g. I'll
 \w(\w?)+'(\w)+
-// e.g. em'e
-// lookbehind lookahead 'asd' -> asd
-(?<=')(\w)+(?=')
+
+// look behind 'grasp should be grasp
+(?<=')[a-z]{3,}
+
 // e.g. 'em
 '(\w)+

@@ -32,6 +32,7 @@ public class Searcher {
     public PostingsList search( Query query, QueryType queryType, RankingType rankingType ) {
         //System.out.println();
         int wcount = 0;
+        System.out.println(" WHATTTT");
         PostingsList answer = new PostingsList();
         System.out.print("Search word(s)");
         for (Query.QueryTerm searchQuery : query.queryterm){
@@ -80,7 +81,6 @@ public class Searcher {
         }
         return answer;
     }
-
     /**
      * @param query containing all the search words
      * @return sorted PostingsList
@@ -106,7 +106,8 @@ public class Searcher {
                     //System.out.println(" Doc id :" + postingsEntry.docID);
                     wFtd = postingsEntry.getTf() * wTq;
                     //System.out.println(" position " + postingsCurr.indexOf(postingsEntry));
-                    rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wTq * wFtd;
+                   //rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wTq * wFtd;
+                    rankedPos.get(rankedPos.indexOf(postingsEntry.docID)).score += wFtd;
                     //System.out.println(rankedPos.get(postingsCurr.indexOf(postingsEntry)).score);
             }
         }
