@@ -7,11 +7,10 @@
 
 package ir;
 
-import java.awt.List;
+//import java.awt.List;
 import java.io.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
-
 
 public class KGramIndex {
 
@@ -53,13 +52,13 @@ public class KGramIndex {
      */
     private List<KGramPostingsEntry> intersect(List<KGramPostingsEntry> p1, List<KGramPostingsEntry> p2) {
        // int numbIterations = (p1.size() > p2.size()) ? p2.size() : p1.size();
-        List<KGramPostingsEntry> result = new List<KGramPostingsEntry>();
+        List<KGramPostingsEntry> result = new ArrayList<KGramPostingsEntry>();
         for (KGramPostingsEntry posEntry1 : p1){
             int currTokenID = posEntry1.tokenID;
             
             for(KGramPostingsEntry posEntry2 : p2){
-                if(posEntry2.tokenID.equals(currTokenID)){
-                    result.add(new KGramIndex(id2term.get(currTokenID)));
+                if(posEntry2.tokenID == currTokenID){
+                    result.add(new KGramPostingsEntry(currTokenID));
                     break;
                 }
             }
@@ -72,37 +71,45 @@ public class KGramIndex {
     // Started by putting the ^ char int the beginning and $ sign
     //  at the end of a token
     public void insert( String token ) {
+        int k = getK();
         int numKGrams = token.length() + 3 - k;
         token += "$";
         String newToken = "^" + token;
         token = newToken;
 
-        int k = getK();
+       
         String kGram;
+        String tokenToAdd = token.substring(1,token.length()-1);
         for (int i = 0; i < numKGrams; i++){
             kGram = token.substring(i, i + k);
             // no kGram in the index Map
-            if(!this.index.contains(kGram)){
-                
-                if (!term2id.containsKey(token.substring(1,token.size()-1)))
-                term2id.put(token.substring(1,token.size()-1), generateTermID());
+            if(!this.index.containsKey(kGram)){
+        
+                if (!term2id.containsKey(tokenToAdd)){
+                term2id.put(tokenToAdd, generateTermID());
+                id2term.put(lastTermID, tokenToAdd);
+            }
 
-                List<KGramPostingsEntry> posEntry = new List<KGramPostingsEntry>();
-                posEntry.add(new KGramPostingsEntry(term2id.get(token.substring(1,token.size()-1))));
+                List<KGramPostingsEntry> posEntry = new ArrayList<KGramPostingsEntry>();
+                posEntry.add(new KGramPostingsEntry(term2id.get(tokenToAdd)));
                 index.put(kGram,posEntry);
  
 
             }else{
                 // append the token to a list from index Map
-                String tokenToAdd = token.substring(1,token.size()-1);
+                
                 boolean tokenAlreadyExist = false;
                 for (KGramPostingsEntry posEntry : index.get(kGram)){
+                    if(term2id.get(tokenToAdd) == null){
+                        term2id.put(tokenToAdd, generateTermID());
+                        id2term.put(lastTermID, tokenToAdd);
+                    }
                     if(posEntry.tokenID == term2id.get(tokenToAdd)){
                         tokenAlreadyExist = true;
                         break;
                     }
                 }if(!tokenAlreadyExist){
-                    index.get(kGram).add(tokenToAdd);
+                    index.get(kGram).add(new KGramPostingsEntry(term2id.get(tokenToAdd)));
                 }
             }
         }
@@ -110,7 +117,7 @@ public class KGramIndex {
 
     /** Get postings for the given k-gram */
     public List<KGramPostingsEntry> getPostings(String kgram) {
-        if(!this.index.contains(kgram)){
+        if(!this.index.containsKey(kgram)){
             System.err.println(" No postings list for " + kgram);
             return null;
         }else {
@@ -171,13 +178,31 @@ public class KGramIndex {
         int k = Integer.parseInt(args.getOrDefault("k", "3"));
         KGramIndex kgIndex = new KGramIndex(k);
 
+     
+
         File f = new File(args.get("file"));
-        Reader reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
-        Tokenizer tok = new Tokenizer( reader, true, false, true, args.get("patterns_file") );
-        while ( tok.hasMoreTokens() ) {
-            String token = tok.nextToken();
-            kgIndex.insert(token);
+        if (f.isFile()){
+            Reader reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
+            Tokenizer tok = new Tokenizer( reader, true, false, true, args.get("patterns_file") );
+            while ( tok.hasMoreTokens() ) {
+                String token = tok.nextToken();
+                kgIndex.insert(token);
+            }
+        }else{
+            String currentDir = System.getProperty("user.dir");
+            File[] files = new File(args.get("file")).listFiles();
+            
+            showFiles(files);
+            for (File file : files){
+                Reader reader = new InputStreamReader( new FileInputStream(file), StandardCharsets.UTF_8 );
+                Tokenizer tok = new Tokenizer( reader, true, false, true, args.get("patterns_file") );
+                while ( tok.hasMoreTokens() ) {
+                    String token = tok.nextToken();
+                    kgIndex.insert(token);
+                }
+            }
         }
+
 
         String[] kgrams = args.get("kgram").split(" ");
         List<KGramPostingsEntry> postings = null;
@@ -204,6 +229,16 @@ public class KGramIndex {
             }
             for (int i = 0; i < resNum; i++) {
                 System.err.println(kgIndex.getTermByID(postings.get(i).tokenID));
+            }
+        }
+    }
+    public static void showFiles(File[] files) {
+        for (File file : files) {
+            if (file.isDirectory()) {
+                System.out.println("Directory: " + file.getName());
+                showFiles(file.listFiles()); // Calls same method again.
+            } else {
+                System.out.println("File: " + file.getName());
             }
         }
     }
