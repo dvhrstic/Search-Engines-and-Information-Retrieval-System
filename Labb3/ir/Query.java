@@ -129,14 +129,15 @@ public class Query {
         
             int relDoc = results.get(i).docID;     
         
-            for (QueryTerm query : queryterm){            
+            for (QueryTerm query : queryterm){  
+                System.out.println(query.term);          
                 termPosList = engine.index.getPostings(query.term);
                 idf = Math.log(engine.index.docNames.size() / termPosList.getDf());
             
                 for(int k = 0; k <  termPosList.size(); k++){
                     if(termPosList.get(k).docID == relDoc){
                         tf = results.get(results.indexOf(termPosList.get(k).docID)).getTf(); 
-                        query.weight += beta * (idf * tf) / numRel;
+                        query.weight += beta * (idf * tf) / engine.index.docLengths.get(relDoc);
                     }
                 }
             }
@@ -145,6 +146,8 @@ public class Query {
 
     double weightSum = 0.0; 
     for (QueryTerm query : queryterm){
+        //Normalization of each entry
+        if (numRel != 0)query.weight /= numRel;
         weightSum += query.weight;
     }
 
