@@ -7,10 +7,15 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Iterator;
 import java.nio.charset.*;
 import java.io.*;
+import org.apache.pdfbox.cos.COSDocument;
+import org.apache.pdfbox.pdfparser.*;
+import org.apache.pdfbox.util.PDFTextStripper;
+import org.apache.pdfbox.pdmodel.PDDocument;
 
 
 /**
@@ -112,12 +117,31 @@ public class Query {
     public void relevanceFeedback( PostingsList results, boolean[] docIsRelevant, Engine engine ) {
         
         int numRel = 0;
+        int docID = 0;
+        //HashMap<String, Double> term2weight = new HashMap<String, Double>();
         for (boolean isRel : docIsRelevant){
-            if(isRel)numRel++;
+           
+            if(isRel){
+                //String currentDir = System.getProperty("user.dir") + "\\davisWiki\\";
+                //System.out.println(currentDir);
+                String docName = engine.index.docNames.get(results.get(docID).docID);
+                //String totalPath = currentDir + docName;
+                System.out.println(docName);
+                File f = new File(docName);
+                processFiles(f ,engine);
+                numRel++;
+            }
+            docID++;
+        }
+        double initialSum = 0.0;
+        for (QueryTerm query : queryterm) {
+            //term2weight.put(query.term, query.weight);
+            initialSum += query.weight;
         }
 
         for(QueryTerm query: queryterm){
-            query.weight *= alpha;
+            query.weight *= alpha / initialSum;
+            //term2weight.put(query.term, query.weight);
         }
         
         double idf;
@@ -130,7 +154,8 @@ public class Query {
             int relDoc = results.get(i).docID;     
         
             for (QueryTerm query : queryterm){  
-                System.out.println(query.term);          
+                //System.out.println(query.term);          
+                //System.out.println("Term : " + query.term);
                 termPosList = engine.index.getPostings(query.term);
                 idf = Math.log(engine.index.docNames.size() / termPosList.getDf());
             
@@ -138,6 +163,8 @@ public class Query {
                     if(termPosList.get(k).docID == relDoc){
                         tf = results.get(results.indexOf(termPosList.get(k).docID)).getTf(); 
                         query.weight += beta * (idf * tf) / engine.index.docLengths.get(relDoc);
+                        //term2weight.put(query.term, query.weight);
+                        //query.weight += beta * (idf * tf);
                     }
                 }
             }
@@ -156,6 +183,65 @@ public class Query {
     }
 
     }
+
+    public void processFiles( File f, Engine engine) {
+        // do not try to index fs that cannot be read
+
+        if ( f.canRead() ) {
+        
+            // First register the document and get a docID
+            try {
+                //  Read the first few bytes of the file to see if it is
+                // likely to be a PDF
+                Reader reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
+                char[] buf = new char[4];
+                reader.read( buf, 0, 4 );
+                reader.close();
+                if ( buf[0] == '%' && buf[1]=='P' && buf[2]=='D' && buf[3]=='F' ) {
+                // We assume this is a PDF file
+                try {
+                    String contents = engine.indexer.extractPDFContents( f );
+                    reader = new StringReader( contents );
+                }
+                catch ( IOException e ) {
+                    // Perhaps it wasn't a PDF file after all
+                    reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
+                }
+                }
+                else {
+                // We hope this is ordinary text
+                reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
+                }
+                Tokenizer tok = new Tokenizer( reader, true, false, true, engine.indexer.patterns_file );
+                int offset = 0;
+                while ( tok.hasMoreTokens() ) {
+                    boolean containsTerm = false;
+                    String token = tok.nextToken();
+                    for(QueryTerm qt : this.queryterm){
+                        if(qt.term.equals(token)){
+                            containsTerm = true;
+                            break;
+                        }
+                    }
+                    if(!containsTerm){
+                        this.queryterm.add(new QueryTerm (token, 0.0));
+                        //System.out.println(token);
+                    }
+
+                }
+
+                reader.close();
+            }
+            catch ( IOException e ) {
+                System.err.println( "Warning: IOException during indexing." );
+            }
+            }else{
+                System.err.println("NOT GOOD");
+            }
+        
+        }
+
+
 }
 
 

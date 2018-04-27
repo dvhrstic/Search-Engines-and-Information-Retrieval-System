@@ -133,7 +133,7 @@ public class Indexer {
      */
     public void insertIntoIndex( int docID, String token, int offset ) {
 		index.insert( token, docID, offset );
-		KgramIndex kIndex = new KGramIndex();
+		KGramIndex kIndex = new KGramIndex(1000);
 		kIndex.insert(token);
     }
 }

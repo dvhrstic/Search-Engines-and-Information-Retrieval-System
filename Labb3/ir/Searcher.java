@@ -66,9 +66,9 @@ public class Searcher {
         //System.out.println(" Test 337 has " + pageRanks.get(2);
         int wcount = 0;
         PostingsList answer = new PostingsList();
-        System.out.print("Search word(s)");
+        System.out.print(" New document");
         for (Query.QueryTerm searchQuery : query.queryterm){
-            System.out.print("'" + searchQuery.term + "'");
+            //System.out.print("'" + searchQuery.term + "'");
             wcount++;
         }
         System.out.println();
@@ -127,7 +127,7 @@ public class Searcher {
             PostingsList postingsCurr = index.getPostings(queryWord);
             wTq = Math.log(index.docNames.size() / postingsCurr.getDf());
 
-            System.out.println(" Word: " + queryWord);
+            //System.out.println(" Word: " + queryWord);
 
             for (int j = 0; j < postingsCurr.size(); j++){
                 PostingsEntry postingsEntry = postingsCurr.get(j);
